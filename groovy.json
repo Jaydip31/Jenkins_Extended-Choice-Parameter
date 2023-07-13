@@ -1,0 +1,25 @@
+import jenkins.model.*
+
+credentialsId = 'pxo2node'
+
+def creds = com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials(
+  com.cloudbees.plugins.credentials.common.StandardUsernameCredentials.class, Jenkins.instance, null, null ).find{
+    it.id == credentialsId}
+
+def getBranchNames(repoUrl) {
+  def command = "git ls-remote -h $repoUrl"
+  def proc = command.execute()
+  proc.waitFor()
+  if (proc.exitValue() != 0) {
+    println "Error, ${proc.err.text}"
+  }
+  def branches = proc.in.text.readLines().collect {
+    it.replaceAll(/[a-z0-9]*\trefs\/heads\//, '')
+  }
+  return branches
+}
+
+def repoUrl = "https://${creds.username}:${creds.password}@gitlab.com/rockwelltrading/pxo-2.0-node.git"
+def branches = getBranchNames(repoUrl)
+
+return branches
